@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理画面 | どんぐりこばっちょ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green: #7aab6e; --green-pale: #eef5eb; --green-light: #a8c89e;
+    --coral: #e8836a; --yellow: #f2c96a;
+    --cream: #fdf8f2; --warm-white: #fffcf8;
+    --text: #3d3028; --text-mid: #6b5a4e; --text-light: #9e8c82;
+    --border: #e8ddd4;
+    --font: 'Zen Maru Gothic', sans-serif;
+  }
+  body { font-family: var(--font); background: #f0ede8; color: var(--text); min-height: 100vh; }
+
+  /* ─── LOGIN ─── */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+  .login-card {
+    background: white; border-radius: 24px; padding: 48px 40px;
+    box-shadow: 0 8px 40px rgba(61,48,40,0.1); width: 100%; max-width: 380px;
+    text-align: center;
+  }
+  .login-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .login-card h1 { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+  .login-card p { font-size: 0.85rem; color: var(--text-light); margin-bottom: 32px; }
+  .login-input {
+    width: 100%; padding: 14px 16px; border: 1.5px solid var(--border);
+    border-radius: 12px; font-family: var(--font); font-size: 1rem;
+    background: var(--cream); color: var(--text); margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus { outline: none; border-color: var(--green); }
+  .login-btn {
+    width: 100%; padding: 14px; background: var(--green); color: white;
+    border: none; border-radius: 12px; font-family: var(--font); font-size: 1rem;
+    font-weight: 700; cursor: pointer; transition: background 0.2s;
+  }
+  .login-btn:hover { background: #5d9152; }
+  .login-error { color: var(--coral); font-size: 0.85rem; margin-top: 8px; display: none; }
+
+  /* ─── ADMIN LAYOUT ─── */
+  #admin-screen { display: none; }
+  .admin-header {
+    background: white; border-bottom: 1px solid var(--border);
+    padding: 0 32px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .admin-header h1 { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .admin-header h1 span { font-size: 1.3rem; }
+  .logout-btn {
+    background: none; border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 6px 14px; font-family: var(--font); font-size: 0.8rem;
+    color: var(--text-mid); cursor: pointer; transition: all 0.2s;
+  }
+  .logout-btn:hover { border-color: var(--coral); color: var(--coral); }
+
+  .admin-body { display: flex; min-height: calc(100vh - 60px); }
+
+  /* sidebar */
+  .sidebar {
+    width: 220px; background: white; border-right: 1px solid var(--border);
+    padding: 24px 0; flex-shrink: 0;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 24px; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+    color: var(--text-mid); transition: all 0.15s; border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover { background: var(--green-pale); color: var(--green); }
+  .sidebar-item.active { background: var(--green-pale); color: var(--green); border-left-color: var(--green); font-weight: 700; }
+  .sidebar-icon { font-size: 1.1rem; }
+
+  /* main */
+  .admin-main { flex: 1; padding: 32px; overflow-y: auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+
+  /* cards */
+  .card {
+    background: white; border-radius: 16px; padding: 28px;
+    border: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--text-mid); }
+
+  /* form elements */
+  label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; color: var(--text-mid); }
+  input[type="text"], textarea, select {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-family: var(--font); font-size: 0.9rem;
+    background: var(--cream); color: var(--text); transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--green); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .btn {
+    padding: 10px 22px; border-radius: 10px; font-family: var(--font);
+    font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none;
+  }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { background: #5d9152; }
+  .btn-coral { background: var(--coral); color: white; }
+  .btn-coral:hover { background: #d4694f; }
+  .btn-ghost { background: none; border: 1.5px solid var(--border); color: var(--text-mid); }
+  .btn-ghost:hover { border-color: var(--coral); color: var(--coral); }
+
+  /* gallery grid */
+  .gallery-upload-area {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 40px;
+    text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 20px;
+  }
+  .gallery-upload-area:hover { border-color: var(--green); background: var(--green-pale); }
+  .gallery-upload-area p { color: var(--text-light); font-size: 0.9rem; margin-top: 8px; }
+  #file-input { display: none; }
+
+  .gallery-preview {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; margin-top: 16px;
+  }
+  .gallery-item {
+    position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+    background: var(--green-pale);
+  }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-item-del {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(232,131,106,0.9); color: white; border: none;
+    border-radius: 50%; width: 26px; height: 26px; cursor: pointer;
+    font-size: 0.75rem; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .gallery-item-del:hover { background: var(--coral); }
+
+  /* schedule */
+  .schedule-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .schedule-row {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .schedule-row input { margin-bottom: 0; flex: 1; }
+  .schedule-row .btn { padding: 10px 12px; }
+
+  /* notice */
+  .notice-preview {
+    background: var(--yellow); border-radius: 8px; padding: 12px 16px;
+    font-size: 0.9rem; font-weight: 600; margin-bottom: 16px;
+    display: none;
+  }
+
+  /* toast */
+  .toast {
+    position: fixed; bottom: 32px; right: 32px;
+    background: var(--text); color: white; padding: 12px 24px;
+    border-radius: 12px; font-size: 0.9rem; font-weight: 500;
+    transform: translateY(20px); opacity: 0; transition: all 0.3s;
+    pointer-events: none; z-index: 1000;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* preview link */
+  .preview-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--green); font-size: 0.85rem; font-weight: 600;
+    text-decoration: none; padding: 8px 16px; background: var(--green-pale);
+    border-radius: 8px; transition: all 0.2s;
+  }
+  .preview-link:hover { background: var(--green-light); color: white; }
+
+  @media (max-width: 640px) {
+    .sidebar { width: 60px; }
+    .sidebar-item span:not(.sidebar-icon) { display: none; }
+    .admin-main { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">🔑</div>
+    <h1>管理画面ログイン</h1>
+    <p>どんぐりこばっちょ 教室管理</p>
+    <input type="password" class="login-input" id="pw-input" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">ログイン</button>
+    <div class="login-error" id="login-error">パスワードが違います</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <h1><span>🌰</span> どんぐりこばっちょ 管理画面</h1>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <a href="index.html" class="preview-link" target="_blank">🌐 サイトを見る</a>
+      <button class="logout-btn" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-item active" onclick="switchPanel('gallery', this)">
+        <span class="sidebar-icon">📷</span><span>ギャラリー</span>
+      </div>
+      <div class="sidebar-item" onclick="switchPanel('schedule', this)">
+        <span class="sidebar-icon">📅</span><span>スケジュール</span>
+      </div>
+      <div class="sidebar-item" onclick="switchPanel('notice', this)">
+        <span class="sidebar-icon">📢</span><span>お知らせ</span>
+      </div>
+      <div class="sidebar-item" onclick="switchPanel('text', this)">
+        <span class="sidebar-icon">✏️</span><span>テキスト編集</span>
+      </div>
+      <div class="sidebar-item" onclick="switchPanel('password', this)">
+        <span class="sidebar-icon">🔒</span><span>パスワード変更</span>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="admin-main">
+
+      <!-- GALLERY PANEL -->
+      <div class="panel active" id="panel-gallery">
+        <div class="panel-title">📷 ギャラリー管理</div>
+        <div class="card">
+          <h3>写真を追加</h3>
+          <div class="gallery-upload-area" onclick="document.getElementById('file-input').click()">
+            <div style="font-size:2rem;">＋</div>
+            <p>クリックして写真を選択<br><small>JPG・PNG・WEBP対応（複数選択OK）</small></p>
+          </div>
+          <input type="file" id="file-input" accept="image/*" multiple onchange="handleImageUpload(event)">
+        </div>
+        <div class="card">
+          <h3>現在の写真一覧 <small style="font-weight:400;color:var(--text-light);">（ドラッグで並べ替え）</small></h3>
+          <div class="gallery-preview" id="gallery-preview"></div>
+          <div style="margin-top:16px;">
+            <button class="btn btn-green" onclick="saveGallery()">💾 保存して反映</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE PANEL -->
+      <div class="panel" id="panel-schedule">
+        <div class="panel-title">📅 スケジュール管理</div>
+        <div class="card">
+          <h3>開講日時</h3>
+          <label>表示テキスト</label>
+          <input type="text" id="schedule-text" placeholder="例：水曜・金曜 15:30〜17:00（月3週）">
+          <button class="btn btn-green" onclick="saveSchedule()">💾 保存して反映</button>
+        </div>
+        <div class="card">
+          <h3>お休み・特別日程</h3>
+          <div class="schedule-list" id="special-list"></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <input type="text" id="special-input" placeholder="例：12/25（水）お休み" style="margin-bottom:0;">
+            <button class="btn btn-ghost" onclick="addSpecial()">追加</button>
+          </div>
+          <button class="btn btn-green" onclick="saveSpecial()">💾 保存して反映</button>
+        </div>
+      </div>
+
+      <!-- NOTICE PANEL -->
+      <div class="panel" id="panel-notice">
+        <div class="panel-title">📢 お知らせバー</div>
+        <div class="card">
+          <h3>サイト上部に表示するお知らせ</h3>
+          <div class="notice-preview" id="notice-preview"></div>
+          <label>お知らせ内容（空白で非表示）</label>
+          <input type="text" id="notice-text" placeholder="例：🌟 12月の体験レッスンの受付を開始しました！" oninput="previewNotice()">
+          <button class="btn btn-green" onclick="saveNotice()">💾 保存して反映</button>
+          <button class="btn btn-ghost" style="margin-left:8px;" onclick="clearNotice()">✕ お知らせを消す</button>
+        </div>
+      </div>
+
+      <!-- TEXT PANEL -->
+      <div class="panel" id="panel-text">
+        <div class="panel-title">✏️ テキスト編集</div>
+        <div class="card">
+          <h3>ヒーローキャッチコピー</h3>
+          <label>メインコピー（1行目）</label>
+          <input type="text" id="hero-line1" placeholder="考えるって、">
+          <label>メインコピー（2行目・強調）</label>
+          <input type="text" id="hero-line2" placeholder="たのしい。">
+          <label>メインコピー（3行目）</label>
+          <input type="text" id="hero-line3" placeholder="わかるって、うれしい。">
+          <button class="btn btn-green" onclick="saveText()">💾 保存して反映</button>
+        </div>
+        <div class="card">
+          <h3>教室紹介文</h3>
+          <label>説明テキスト</label>
+          <textarea id="about-text" placeholder="どんぐりこばっちょは、算数を通して子どもの「考える力」と「自信」を育てる少人数制の自宅算数教室です。"></textarea>
+          <button class="btn btn-green" onclick="saveAbout()">💾 保存して反映</button>
+        </div>
+      </div>
+
+      <!-- PASSWORD PANEL -->
+      <div class="panel" id="panel-password">
+        <div class="panel-title">🔒 パスワード変更</div>
+        <div class="card">
+          <label>現在のパスワード</label>
+          <input type="password" id="pw-old" placeholder="現在のパスワード">
+          <label>新しいパスワード</label>
+          <input type="password" id="pw-new" placeholder="新しいパスワード">
+          <label>新しいパスワード（確認）</label>
+          <input type="password" id="pw-confirm" placeholder="もう一度入力">
+          <button class="btn btn-green" onclick="changePassword()">🔒 パスワードを変更</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 設定 ───
+const DEFAULT_PASSWORD = 'donguri2025';
+const PW_KEY = 'dkb_password';
+
+function getPassword() {
+  return localStorage.getItem(PW_KEY) || DEFAULT_PASSWORD;
+}
+
+// ─── ログイン ───
+function tryLogin() {
+  const input = document.getElementById('pw-input').value;
+  if (input === getPassword()) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    loadAll();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+  }
+}
+
+function logout() {
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+}
+
+// ─── パネル切替 ───
+function switchPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ─── トースト ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── ギャラリー ───
+let galleryImages = [];
+
+function handleImageUpload(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      galleryImages.push({ src: ev.target.result, caption: file.name.replace(/\.[^.]+$/, '') });
+      renderGalleryPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderGalleryPreview() {
+  const preview = document.getElementById('gallery-preview');
+  if (galleryImages.length === 0) {
+    preview.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">まだ写真がありません</p>';
+    return;
+  }
+  preview.innerHTML = galleryImages.map((img, i) => `
+    <div class="gallery-item">
+      <img src="${img.src}" alt="${img.caption}">
+      <button class="gallery-item-del" onclick="removeImage(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeImage(i) {
+  galleryImages.splice(i, 1);
+  renderGalleryPreview();
+}
+
+function saveGallery() {
+  // Base64画像はlocalStorageの容量制限に注意（約5MB）
+  try {
+    localStorage.setItem('dkb_gallery', JSON.stringify(galleryImages));
+    showToast('✅ ギャラリーを保存しました');
+  } catch(e) {
+    showToast('⚠️ 画像が大きすぎます。枚数を減らしてください');
+  }
+}
+
+function loadGalleryAdmin() {
+  galleryImages = JSON.parse(localStorage.getItem('dkb_gallery') || '[]');
+  renderGalleryPreview();
+}
+
+// ─── スケジュール ───
+let specialDates = [];
+
+function loadScheduleAdmin() {
+  document.getElementById('schedule-text').value = localStorage.getItem('dkb_schedule') || '水曜・金曜 15:30〜17:00（月3週）';
+  specialDates = JSON.parse(localStorage.getItem('dkb_special') || '[]');
+  renderSpecial();
+}
+
+function saveSchedule() {
+  localStorage.setItem('dkb_schedule', document.getElementById('schedule-text').value);
+  showToast('✅ スケジュールを保存しました');
+}
+
+function addSpecial() {
+  const val = document.getElementById('special-input').value.trim();
+  if (!val) return;
+  specialDates.push(val);
+  document.getElementById('special-input').value = '';
+  renderSpecial();
+}
+
+function removeSpecial(i) {
+  specialDates.splice(i, 1);
+  renderSpecial();
+}
+
+function renderSpecial() {
+  const list = document.getElementById('special-list');
+  list.innerHTML = specialDates.map((d, i) => `
+    <div class="schedule-row">
+      <input type="text" value="${d}" oninput="specialDates[${i}]=this.value">
+      <button class="btn btn-ghost" onclick="removeSpecial(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function saveSpecial() {
+  localStorage.setItem('dkb_special', JSON.stringify(specialDates));
+  showToast('✅ 特別日程を保存しました');
+}
+
+// ─── お知らせ ───
+function loadNoticeAdmin() {
+  const val = localStorage.getItem('dkb_notice') || '';
+  document.getElementById('notice-text').value = val;
+  previewNotice();
+}
+
+function previewNotice() {
+  const val = document.getElementById('notice-text').value;
+  const prev = document.getElementById('notice-preview');
+  if (val) { prev.textContent = val; prev.style.display = 'block'; }
+  else { prev.style.display = 'none'; }
+}
+
+function saveNotice() {
+  localStorage.setItem('dkb_notice', document.getElementById('notice-text').value);
+  showToast('✅ お知らせを保存しました');
+}
+
+function clearNotice() {
+  document.getElementById('notice-text').value = '';
+  localStorage.removeItem('dkb_notice');
+  previewNotice();
+  showToast('✅ お知らせを削除しました');
+}
+
+// ─── テキスト ───
+function loadTextAdmin() {
+  const hero = JSON.parse(localStorage.getItem('dkb_hero') || '{}');
+  document.getElementById('hero-line1').value = hero.line1 || '考えるって、';
+  document.getElementById('hero-line2').value = hero.line2 || 'たのしい。';
+  document.getElementById('hero-line3').value = hero.line3 || 'わかるって、うれしい。';
+  document.getElementById('about-text').value = localStorage.getItem('dkb_about') || '';
+}
+
+function saveText() {
+  localStorage.setItem('dkb_hero', JSON.stringify({
+    line1: document.getElementById('hero-line1').value,
+    line2: document.getElementById('hero-line2').value,
+    line3: document.getElementById('hero-line3').value,
+  }));
+  showToast('✅ キャッチコピーを保存しました');
+}
+
+function saveAbout() {
+  localStorage.setItem('dkb_about', document.getElementById('about-text').value);
+  showToast('✅ 紹介文を保存しました');
+}
+
+// ─── パスワード変更 ───
+function changePassword() {
+  const old = document.getElementById('pw-old').value;
+  const nw = document.getElementById('pw-new').value;
+  const conf = document.getElementById('pw-confirm').value;
+  if (old !== getPassword()) { showToast('⚠️ 現在のパスワードが違います'); return; }
+  if (!nw) { showToast('⚠️ 新しいパスワードを入力してください'); return; }
+  if (nw !== conf) { showToast('⚠️ パスワードが一致しません'); return; }
+  localStorage.setItem(PW_KEY, nw);
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  showToast('✅ パスワードを変更しました');
+}
+
+// ─── 全データ読み込み ───
+function loadAll() {
+  loadGalleryAdmin();
+  loadScheduleAdmin();
+  loadNoticeAdmin();
+  loadTextAdmin();
+}
+</script>
+</body>
+</html>
